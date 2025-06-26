@@ -2,6 +2,7 @@ package io.github.cotrin8672.inglyph
 
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import io.github.cotrin8672.inglyph.compose.App
 import kotlinx.browser.document
 
 @OptIn(ExperimentalComposeUiApi::class)
