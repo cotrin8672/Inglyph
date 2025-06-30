@@ -1,5 +1,9 @@
 package io.github.cotrin8672.inglyph.platform
 
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -8,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
+import java.io.ByteArrayInputStream
 import javax.sound.sampled.*
 
 class DesktopAudioPlayer() : AudioPlayer {
@@ -21,7 +25,6 @@ class DesktopAudioPlayer() : AudioPlayer {
         get() = _isPlaying.asStateFlow()
 
     private var audioThread: Job? = null
-    private var audioFile: File? = null
     private var audioStream: AudioInputStream? = null
     private var pcmFormat: AudioFormat? = null
     private var decodedStream: AudioInputStream? = null
@@ -29,30 +32,39 @@ class DesktopAudioPlayer() : AudioPlayer {
 
     private var playbackSpeed = 1.0f
 
+    private val httpClient = HttpClient(CIO)
+
     override suspend fun prepare(sourceUrl: String) {
-        audioFile = File(sourceUrl)
-        audioStream = AudioSystem.getAudioInputStream(audioFile)
-        val baseFormat = audioStream!!.format
-        pcmFormat = AudioFormat(
-            AudioFormat.Encoding.PCM_SIGNED,
-            baseFormat.sampleRate,
-            16,
-            baseFormat.channels,
-            baseFormat.channels * 2,
-            baseFormat.sampleRate,
-            false
-        )
-        decodedStream = AudioSystem.getAudioInputStream(pcmFormat, audioStream)
-        val info = DataLine.Info(SourceDataLine::class.java, pcmFormat)
-        line = AudioSystem.getLine(info) as SourceDataLine
-        line?.open(pcmFormat)
-        val sampleRateControl = line?.controls
-            ?.firstOrNull { it.type == FloatControl.Type.SAMPLE_RATE }
-        if (sampleRateControl is FloatControl) {
-            sampleRateControl.value = pcmFormat!!.sampleRate * playbackSpeed
+        try {
+            val audioBytes = httpClient.get(sourceUrl).body<ByteArray>()
+            val byteArrayInputStream = ByteArrayInputStream(audioBytes)
+
+            audioStream = AudioSystem.getAudioInputStream(byteArrayInputStream)
+            val baseFormat = audioStream!!.format
+            pcmFormat = AudioFormat(
+                AudioFormat.Encoding.PCM_SIGNED,
+                baseFormat.sampleRate,
+                16,
+                baseFormat.channels,
+                baseFormat.channels * 2,
+                baseFormat.sampleRate,
+                false
+            )
+            decodedStream = AudioSystem.getAudioInputStream(pcmFormat, audioStream)
+            val info = DataLine.Info(SourceDataLine::class.java, pcmFormat)
+            line = AudioSystem.getLine(info) as SourceDataLine
+            line?.open(pcmFormat)
+            val sampleRateControl = line?.controls
+                ?.firstOrNull { it.type == FloatControl.Type.SAMPLE_RATE }
+            if (sampleRateControl is FloatControl) {
+                sampleRateControl.value = pcmFormat!!.sampleRate * playbackSpeed
+            }
+            _position.value = 0L
+            _isPlaying.value = false
+        } catch (e: Exception) {
+            println("Error preparing audio from URL: $sourceUrl - ${e.message}")
+            // エラーハンドリング
         }
-        _position.value = 0L
-        _isPlaying.value = false
     }
 
     override fun play() {

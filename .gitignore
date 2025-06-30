@@ -3,7 +3,7 @@
 .gradle
 **/build/
 xcuserdata
-.env
+local.properties
 
 !src/**/build/
 local.properties
