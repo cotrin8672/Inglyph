@@ -1,31 +1,58 @@
 package io.github.cotrin8672.inglyph.platform
 
-import kotlinx.coroutines.flow.StateFlow
+import android.media.MediaPlayer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class AndroidAudioPlayer() : AudioPlayer {
-    override val position: StateFlow<Long>
-        get() = TODO("Not yet implemented")
-    override val isPlaying: StateFlow<Boolean>
-        get() = TODO("Not yet implemented")
+class AndroidAudioPlayer(private val scope: CoroutineScope) : AudioPlayer {
+    private var mediaPlayer: MediaPlayer? = null
+    private var positionJob: Job? = null
+
+    private val _position = MutableStateFlow(0L)
+    override val position = _position.asStateFlow()
+
+    private val _isPlaying = MutableStateFlow(false)
+    override val isPlaying = _isPlaying.asStateFlow()
 
     override suspend fun prepare(sourceUrl: String) {
-        TODO("Not yet implemented")
+        mediaPlayer?.release()
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(sourceUrl)
+            prepare()
+            setOnCompletionListener {
+                _isPlaying.value = false
+                positionJob?.cancel()
+            }
+        }
     }
 
     override fun play() {
-        TODO("Not yet implemented")
+        mediaPlayer?.start()
+        _isPlaying.value = true
+        positionJob = scope.launch {
+            while (isPlaying.value) {
+                _position.value = mediaPlayer?.currentPosition?.toLong() ?: 0L
+                delay(100)
+            }
+        }
     }
 
     override fun pause() {
-        TODO("Not yet implemented")
+        mediaPlayer?.pause()
+        _isPlaying.value = false
+        positionJob?.cancel()
     }
 
     override fun setSpeed(speed: Float) {
-        TODO("Not yet implemented")
+        mediaPlayer?.playbackParams = mediaPlayer?.playbackParams?.setSpeed(speed)!!
     }
-
 }
 
 actual fun createAudioPlayer(): AudioPlayer {
-    return AndroidAudioPlayer()
+    return AndroidAudioPlayer(CoroutineScope(Dispatchers.Main))
 }

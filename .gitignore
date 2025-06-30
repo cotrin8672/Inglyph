@@ -3,6 +3,8 @@
 .gradle
 **/build/
 xcuserdata
+.env
+
 !src/**/build/
 local.properties
 .idea

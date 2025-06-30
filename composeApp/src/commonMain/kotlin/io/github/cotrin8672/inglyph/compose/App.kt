@@ -31,16 +31,13 @@ fun App() {
 
     MaterialTheme {
         Scaffold(
-            topBar = {
-                if (canNavigateBack) {
-                    TopBar { navController.popBackStack() }
+                topBar = {
+                    if (canNavigateBack) {
+                        TopBar { navController.popBackStack() }
+                    }
                 }
-            }
         ) { padding ->
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.padding(padding)
-            ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(padding)) {
                 AppNavHost(navController)
             }
         }
@@ -50,19 +47,15 @@ fun App() {
 @Preview
 @Composable
 fun AppNavHost(
-    navHostController: NavHostController = rememberNavController(),
+        navHostController: NavHostController = rememberNavController(),
 ) {
     NavHost(
-        navController = navHostController,
-        startDestination = Home,
+            navController = navHostController,
+            startDestination = Home,
     ) {
-        composable<Home> {
-            HomeScreen(navHostController)
-        }
+        composable<Home> { HomeScreen(navHostController) }
 
-        composable<DictationPractice> {
-            DictationScreen()
-        }
+        composable<DictationPractice> { DictationScreen() }
     }
 }
 
@@ -71,14 +64,11 @@ fun AppNavHost(
 @Composable
 fun TopBar(onBack: () -> Unit = {}) {
     TopAppBar(
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-        },
-        title = {}
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+            },
+            title = {}
     )
 }
