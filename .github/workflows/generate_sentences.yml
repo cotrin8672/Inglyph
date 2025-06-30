@@ -35,7 +35,7 @@ jobs:
             echo "Generating sentence $i with difficulty: $DIFFICULTY"
 
             # Supabase Edge Function を呼び出し
-            curl -X POST "${SUPABASE_URL}/functions/v1/generate-sentence" \
+            curl -X POST "${SUPABASE_URL}/functions/v1/generate_sentence" \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
               -d "{\"difficulty\": \"${DIFFICULTY}\"}" || {
