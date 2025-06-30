@@ -1,32 +1,48 @@
 name: Generate Daily Sentences
 
 on:
-  schedule: # Runs daily at 00:00 UTC
+  schedule:
+    # 毎日 00:00 UTC に実行
     - cron: '0 0 * * *'
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
   generate:
-    runs-on:
-      ubuntu-latest    env:
-        SUPABASE_URL:
-          ${{ secrets.SUPABASE_URL }}      SUPABASE_ANON_KEY:
-            ${{ secrets.SUPABASE_ANON_KEY }}    steps:
-              - name:
-                  Checkout repository        uses: actions/checkout@v4
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-              - name:
-                  Generate sentences        run: |          #!/bin/bash          set -euo pipefail
-                    
-                    # Define CEFR levels with weights for A2, B1, B2          # A1: 1, A2: 3, B1: 4, B2: 3, C1: 1          declare -a levels=("A1" "A2" "A2" "A2" "B1" "B1" "B1" "B1" "B2" "B2" "B2" "C1")
-                    
-                    # Number of sentences to generate          NUM_SENTENCES=25 # Adjust as needed (20-30)
-                    
-                                                   for i in $(seq 1 $NUM_SENTENCES); do            # Randomly select a difficulty level based on weights            RANDOM_INDEX=$(( RANDOM % ${#levels[@]} ))            DIFFICULTY=${levels[$RANDOM_INDEX]}
-                    
-                                                   echo "Generating sentence $i with difficulty: $DIFFICULTY"
-                    
-                                                   curl -X POST "${SUPABASE_URL}/functions/v1/generate-sentence" \              -H 'Content-Type:
-                                                     application/json' \              -H "Authorization:
-                                                       Bearer ${SUPABASE_ANON_KEY}" \              -d "{\"difficulty\": \"${DIFFICULTY}\"}" || {                echo "Failed to generate sentence $i. Continuing with next..."                sleep 5 # Wait a bit before retrying or continuing              }            sleep 1 # Small delay between requests to avoid hitting rate limits too quickly          done
+      - name: Generate sentences
+        run: |
+          #!/bin/bash
+          set -euo pipefail
 
+          # CEFR レベルの重み付け配列
+          levels=("A1" "A2" "A2" "A2" "B1" "B1" "B1" "B1" "B2" "B2" "B2" "C1")
+
+          # 生成する文の数
+          NUM_SENTENCES=25
+
+          for i in $(seq 1 $NUM_SENTENCES); do
+            # ランダムに難易度を選択
+            RANDOM_INDEX=$(( RANDOM % ${#levels[@]} ))
+            DIFFICULTY=${levels[$RANDOM_INDEX]}
+
+            echo "Generating sentence $i with difficulty: $DIFFICULTY"
+
+            # Supabase Edge Function を呼び出し
+            curl -X POST "${SUPABASE_URL}/functions/v1/generate-sentence" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+              -d "{\"difficulty\": \"${DIFFICULTY}\"}" || {
+                echo "Failed to generate sentence $i. Continuing with next..."
+                sleep 5
+              }
+
+            # レートリミット回避のため少し待機
+            sleep 1
+          done
