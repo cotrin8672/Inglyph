@@ -18,7 +18,7 @@ plugins {
 fun <T : Any> propOfDef(propertyName: String, defaultValue: T): T {
     val props = Properties()
     try {
-        FileInputStream("../local.properties").use { props.load(it) }
+        FileInputStream("local.properties").use { props.load(it) }
     } catch (e: Exception) {
         println("Error reading local.properties: ${e.message}")
     }
@@ -117,6 +117,9 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+    }
+    lint {
+        disable.add("NullSafeMutableLiveData")
     }
     packaging {
         resources {
