@@ -1,6 +1,5 @@
-/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
-
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@latest';
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@latest';
 
 Deno.serve(async (req) => {
     try {
@@ -10,7 +9,10 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({error: 'Difficulty is required.'}), {status: 400});
         }
 
-        const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!);
+        const supabase = createClient(
+            Deno.env.get('SUPABASE_URL')!,
+            Deno.env.get('SUPABASE_ANON_KEY')!
+        );
 
         // 1. Get count of sentences for the given difficulty
         const {count, error: countError} = await supabase
@@ -46,7 +48,9 @@ Deno.serve(async (req) => {
             return new Response(JSON.stringify({error: 'Sentence not found at random offset.'}), {status: 404});
         }
 
-        return new Response(JSON.stringify(data[0]), {headers: {'Content-Type': 'application/json'}});
+        return new Response(JSON.stringify(data[0]), {
+            headers: { 'Content-Type': 'application/json' }
+        });
 
     } catch (e) {
         console.error('Unhandled error:', e);
