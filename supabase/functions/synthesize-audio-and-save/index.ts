@@ -27,13 +27,35 @@ const voices = [
 
 Deno.serve(async (req) => {
     try {
-        const { sentenceId, text_en } = await req.json();
+        const { sentenceId } = await req.json();
         
-        if (!sentenceId || !text_en) {
+        if (!sentenceId) {
             return new Response(JSON.stringify({
-                error: 'sentenceId and text_en are required.'
+                error: 'sentenceId is required.'
             }), { status: 400 });
         }
+
+        // Initialize Supabase client
+        const supabase = createClient(
+            Deno.env.get('SUPABASE_URL')!,
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+        );
+
+        // Fetch sentence from database
+        const { data: sentence, error: fetchError } = await supabase
+            .from('sentence')
+            .select('text_en')
+            .eq('id', sentenceId)
+            .single();
+
+        if (fetchError || !sentence) {
+            console.error('Sentence fetch error:', fetchError);
+            return new Response(JSON.stringify({
+                error: `Sentence not found with id: ${sentenceId}`
+            }), { status: 404 });
+        }
+
+        const text_en = sentence.text_en;
 
         // Select random voice
         const randomVoice = voices[Math.floor(Math.random() * voices.length)];
@@ -72,12 +94,7 @@ Deno.serve(async (req) => {
         // Convert base64 to binary for storage
         const audioBuffer = Uint8Array.from(atob(audioContent), c => c.charCodeAt(0));
 
-        // Save to Supabase Storage (use service_role key to bypass RLS)
-        const supabase = createClient(
-            Deno.env.get('SUPABASE_URL')!,
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-        );
-
+        // Save to Supabase Storage
         const { error: storageError } = await supabase.storage
             .from('audio')
             .upload(`${sentenceId}.mp3`, audioBuffer, {
