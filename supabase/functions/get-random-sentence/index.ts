@@ -14,38 +14,19 @@ Deno.serve(async (req) => {
             Deno.env.get('SUPABASE_ANON_KEY')!
         );
 
-        // 1. Get count of sentences for the given difficulty
-        const {count, error: countError} = await supabase
-            .from('sentence')
-            .select('id', {count: 'exact'})
-            .eq('difficulty', difficulty);
+        // Use RPC function for better performance
+        const {data, error} = await supabase
+            .rpc('get_random_sentence_by_difficulty', {
+                p_difficulty: difficulty
+            });
 
-        if (countError) {
-            console.error('Supabase Count Error:', countError);
-            return new Response(JSON.stringify({error: countError.message}), {status: 500});
-        }
-
-        if (count === 0) {
-            return new Response(JSON.stringify({error: 'No sentences found for this difficulty.'}), {status: 404});
-        }
-
-        // 2. Generate a random offset
-        const randomOffset = Math.floor(Math.random() * count);
-
-        // 3. Fetch one sentence at the random offset
-        const {data, error: selectError} = await supabase
-            .from('sentence')
-            .select('*')
-            .eq('difficulty', difficulty)
-            .range(randomOffset, randomOffset);
-
-        if (selectError) {
-            console.error('Supabase Select Error:', selectError);
-            return new Response(JSON.stringify({error: selectError.message}), {status: 500});
+        if (error) {
+            console.error('Supabase RPC Error:', error);
+            return new Response(JSON.stringify({error: error.message}), {status: 500});
         }
 
         if (!data || data.length === 0) {
-            return new Response(JSON.stringify({error: 'Sentence not found at random offset.'}), {status: 404});
+            return new Response(JSON.stringify({error: 'No sentences found for this difficulty.'}), {status: 404});
         }
 
         return new Response(JSON.stringify(data[0]), {
