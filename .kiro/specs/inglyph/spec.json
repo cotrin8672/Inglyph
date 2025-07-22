@@ -1,0 +1,28 @@
+{
+  "feature_name": "mvp-enhancements",
+  "project_description": "InglyphアプリのMVP機能強化。難易度選択機能の実装、学習履歴の保存と表示、ディクテーション結果の詳細表示、エラーハンドリングの改善、基本的なオフライン対応を含む。MVVM + Repository + UseCaseアーキテクチャに基づき、ローカルデータ永続化と統計情報集計機能を実装する。",
+  "created_at": "2025-01-21T15:17:00Z",
+  "updated_at": "2025-01-22T00:00:00Z",
+  "language": "japanese",
+  "phase": "tasks-generated",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": false
+    }
+  },
+  "progress": {
+    "requirements": 100,
+    "design": 100,
+    "tasks": 100
+  },
+  "ready_for_implementation": false
+}

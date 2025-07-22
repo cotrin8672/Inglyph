@@ -1,101 +1,142 @@
-# AI エージェント.md
+# Claude Code Spec-Driven Development
 
-## 1. 概要
+This project implements Kiro-style Spec-Driven Development for Claude Code using hooks and slash commands.
 
-- **アプリ名**: Inglyph
-- **目的**: 英語のリスニング力とタイピング力を同時に鍛える
-- **対象プラットフォーム**: Android, Desktop (Compose Multiplatform)
+## Project Context
 
-## 2. 技術スタック
+### Project Steering
 
-- **言語**: Kotlin Multiplatform
-- **UI フレームワーク**: Compose Multiplatform
-  - Android
-  - Desktop (Desktop Compose)
-- **バックエンド**: Supabase
-  - Database (PostgreSQL)
-  - Storage (音声ファイル管理)
-- **依存注入**: Koin
-- **ナビゲーション**: Compose Navigation (TypesafeNavigation)
-- **状態管理**: ViewModel + StateFlow
-- **テスト**: Kotlin.test + MockK, CI (GitHub Actions)
+- Product overview: `.kiro/steering/product.md`
+- Technology stack: `.kiro/steering/tech.md`
+- Project structure: `.kiro/steering/structure.md`
+- Custom steering docs for specialized contexts
 
-## 3. アーキテクチャ
+### Active Specifications
 
-- **アーキテクチャ**: MVVM + Repository + UseCase を採用
-- **DI フレームワーク**: Koin を採用
+- Current spec: Check `.kiro/specs/` for active specifications
+- Use `/spec-status [feature-name]` to check progress
 
-| 層         | 使用ライブラリ                              | 粒度・抽象度                                                                      |
-| ---------- | ------------------------------------------- | --------------------------------------------------------------------------------- | ---------------- |
-| Model      | Kotlin data class                           | 純粋なデータ表現に限定。バリデーションは最低限、変換ロジックは含まない。          |
-| View       | Compose Multiplatform                       | 宣言型 UI の定義に集中。状態やイベント処理は ViewModel に委譲。                   |
-| ViewModel  | lifecycle-viewmodel-compose + StateFlow     | UI 状態管理とイベント窓口。UseCase 呼び出しのみを担当し、副作用処理は最小化。     |
-| Repository | Supabase Kotlin Client                      | データ取得・永続化の抽象化に特化。ビジネスロジックは含めず、純粋な I/O レイヤー。 |
-| UseCase    | 単一責任クラス (e.g., FetchSentenceUseCase) | 各ユースケースごとのビジネスロジックに集中。副作用管理と結果の返却を担う。        | ## 4. データ設計 |
+## Development Guidelines
 
-### Supabase Storage
+- Think in English, but generate responses in Japanese (思考は英語、回答の生成は日本語で行うように)
 
-- 音声ファイル (.mp3)
-- パス設計: `<sentence.id>.mp3` （ファイル名にデータベースの UUID をそのまま使用）
+## Spec-Driven Development Workflow
 
-### Supabase Database
+### Phase 0: Steering Generation (Recommended)
 
-- **Table: sentence**
+#### Kiro Steering (`.kiro/steering/`)
 
-  | カラム名   | 型       | 説明                                    |
-  | ---------- | -------- | --------------------------------------- |
-  | id         | UUID     | プライマリキー                          |
-  | text_en    | Text     | 英文                                    |
-  | text_ja    | Text     | 日本語訳                                |
-  | difficulty | Text     | CEFR レベル (A1, A2, B1, B2, C1) を格納 |
-  | created_at | DateTime | レコード作成日時                        |
+```
+/steering-init          # Generate initial steering documents
+/steering-update        # Update steering after changes
+/steering-custom        # Create custom steering for specialized contexts
+```
 
-## 5. Difficulty 設計
+**Note**: For new features or empty projects, steering is recommended but not required. You can proceed directly to spec-requirements if needed.
 
-- **CEFR ベース**: A1 ～ C1 の 5 段階
-- **運用方法**: sentences テーブルの difficulty カラムに対応する CEFR レベルを文字列で保持
+### Phase 1: Specification Creation
 
-| CEFR | 概要                     | 目安単語数 | 主な文法/語彙特徴            |
-| ---- | ------------------------ | ---------- | ---------------------------- |
-| A1   | 基本的な表現             | ～ 5       | 単文、現在形                 |
-| A2   | 日常的な表現の理解と使用 | 6 ～ 10    | 過去形、進行形               |
-| B1   | 複雑な文の理解           | 11 ～ 15   | 従属節、比較級、現在完了形   |
-| B2   | 幅広いトピックに対応     | 16 ～ 20   | 関係代名詞、受動態           |
-| C1   | 高度な学術・専門的内容   | 20 以上    | 仮定法、間接話法、複雑な構造 |
+```
+/spec-init [feature-name]           # Initialize spec structure only
+/spec-requirements [feature-name]   # Generate requirements → Review → Edit if needed
+/spec-design [feature-name]         # Generate technical design → Review → Edit if needed
+/spec-tasks [feature-name]          # Generate implementation tasks → Review → Edit if needed
+```
 
-## 6. UI/UX フロー
+### Phase 2: Progress Tracking
 
-1. **ホーム画面**
-   - 練習開始ボタン
-   - 難易度選択ドロップダウン
-2. **ディクテーション画面**
-   - 英語音声再生 (連続再生機能)
-   - テキスト入力フィールド
-   - 提出ボタン
-   - フィードバック表示（80%以上の一致で合格）
-   - 「次へ」ボタン or 自動連続モード
-3. **結果画面 (任意)**
-   - 正解率表示
-   - 間違えた箇所のハイライト
+```
+/spec-status [feature-name]         # Check current progress and phases
+```
 
-## 7. テスト戦略
+## Spec-Driven Development Workflow
 
-- **Unit Test**
-  - UseCase 単体テスト (Kotlin.test + MockK)
-  - Repository のモックテスト
-- **CI パイプライン**
-  - GitHub Actions でビルド & テスト自動化
-- **カバレッジ**
-  - 主要ロジックは 80%以上を目標
+Kiro's spec-driven development follows a strict **3-phase approval workflow**:
 
-## 8. MVP 実装計画
+### Phase 1: Requirements Generation & Approval
 
-MVP レベルの実装に必要なクラス・インターフェースの詳細は[PoC.md](./PoC.md)を参照してください。
+1. **Generate**: `/spec-requirements [feature-name]` - Generate requirements document
+2. **Review**: Human reviews `requirements.md` and edits if needed
+3. **Approve**: Manually update `spec.json` to set `"requirements": true`
 
-### MVP 機能概要
+### Phase 2: Design Generation & Approval
 
-- 難易度選択機能の実装
-- 基本的な学習履歴の保存
-- シンプルな結果表示
-- エラーハンドリングの改善
-- 基本的なオフライン対応（キャッシュ）
+1. **Generate**: `/spec-design [feature-name]` - Generate technical design (requires requirements approval)
+2. **Review**: Human reviews `design.md` and edits if needed
+3. **Approve**: Manually update `spec.json` to set `"design": true`
+
+### Phase 3: Tasks Generation & Approval
+
+1. **Generate**: `/spec-tasks [feature-name]` - Generate implementation tasks (requires design approval)
+2. **Review**: Human reviews `tasks.md` and edits if needed
+3. **Approve**: Manually update `spec.json` to set `"tasks": true`
+
+### Implementation
+
+Only after all three phases are approved can implementation begin.
+
+**Key Principle**: Each phase requires explicit human approval before proceeding to the next phase, ensuring quality and accuracy throughout the development process.
+
+## Development Rules
+
+1. **Consider steering**: Run `/steering-init` before major development (optional for new features)
+2. **Follow the 3-phase approval workflow**: Requirements → Design → Tasks → Implementation
+3. **Manual approval required**: Each phase must be explicitly approved by human review
+4. **No skipping phases**: Design requires approved requirements; Tasks require approved design
+5. **Update task status**: Mark tasks as completed when working on them
+6. **Keep steering current**: Run `/steering-update` after significant changes
+7. **Check spec compliance**: Use `/spec-status` to verify alignment
+
+## Automation
+
+This project uses Claude Code hooks to:
+
+- Automatically track task progress in tasks.md
+- Check spec compliance
+- Preserve context during compaction
+- Detect steering drift
+
+### Task Progress Tracking
+
+When working on implementation:
+
+1. **Manual tracking**: Update tasks.md checkboxes manually as you complete tasks
+2. **Progress monitoring**: Use `/spec-status` to view current completion status
+3. **TodoWrite integration**: Use TodoWrite tool to track active work items
+4. **Status visibility**: Checkbox parsing shows completion percentage
+
+## Getting Started
+
+1. Initialize steering documents: `/steering-init`
+2. Create your first spec: `/spec-init [your-feature-name]`
+3. Follow the workflow through requirements, design, and tasks
+
+## Kiro Steering Details
+
+Kiro-style steering provides persistent project knowledge through markdown files:
+
+### Core Steering Documents
+
+- **product.md**: Product overview, features, use cases, value proposition
+- **tech.md**: Architecture, tech stack, dev environment, commands, ports
+- **structure.md**: Directory organization, code patterns, naming conventions
+
+### Custom Steering
+
+Create specialized steering documents for:
+
+- API standards
+- Testing approaches
+- Code style guidelines
+- Security policies
+- Database conventions
+- Performance standards
+- Deployment workflows
+
+### Inclusion Modes
+
+- **Always Included**: Loaded in every interaction (default)
+- **Conditional**: Loaded for specific file patterns (e.g., `"*.test.js"`)
+- **Manual**: Loaded on-demand with `#filename` reference
+
+※返答は日本語を用いること
